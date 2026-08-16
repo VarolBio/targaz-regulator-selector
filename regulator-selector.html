@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Targaz Regulator Selector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg0: #e8eef2;
+  --bg1: #d5dee6;
+  --ink: #14202b;
+  --muted: #4d5d6b;
+  --line: #b7c4cf;
+  --card: rgba(248,251,253,0.94);
+  --accent: #0b6e7a;
+  --accent-2: #1f4b7a;
+  --accent-soft: #d4eef1;
+  --warn: #1f4b7a;
+  --shadow: 0 18px 50px rgba(20,32,43,0.12);
+  --radius: 16px;
+  --font: "Manrope", system-ui, sans-serif;
+  --display: "Space Grotesk", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  background:
+    radial-gradient(1100px 520px at 8% -8%, #cfe8ec 0%, transparent 55%),
+    radial-gradient(900px 480px at 100% 0%, #c9d8e8 0%, transparent 48%),
+    linear-gradient(165deg, var(--bg0), var(--bg1));
+  background-attachment: fixed;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+}
+.app {
+  position: relative;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 18px 64px;
+}
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-bottom: 28px;
+}
+.brand {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.brand-name {
+  font-family: var(--display);
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+.brand-sub { color: var(--muted); font-size: 0.95rem; }
+.lang {
+  display: inline-flex; background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px; box-shadow: var(--shadow);
+}
+.lang button {
+  border: 0; background: transparent; color: var(--muted);
+  font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+}
+.lang button.active { background: var(--accent); color: #fff; }
+.shell {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 6px);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+.progress {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+  padding: 16px 18px 0;
+}
+.progress span {
+  height: 5px; border-radius: 99px; background: #ddd4c5;
+  transition: background .25s ease, transform .25s ease;
+}
+.progress span.done { background: var(--accent); }
+.progress span.current { background: var(--accent-2); transform: scaleY(1.35); }
+.panel { padding: 22px 22px 18px; }
+.step-kicker {
+  text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.72rem;
+  color: var(--accent); font-weight: 700; margin-bottom: 8px;
+}
+h1 {
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 400; margin: 0 0 10px; letter-spacing: -0.02em;
+}
+.lead { color: var(--muted); margin: 0 0 22px; max-width: 52ch; line-height: 1.5; }
+.layout {
+  display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; align-items: start;
+}
+@media (max-width: 820px) {
+  .layout { grid-template-columns: 1fr; }
+}
+.field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.field label { font-weight: 600; font-size: 0.95rem; }
+.row { display: flex; gap: 10px; align-items: center; }
+input[type="number"], select {
+  width: 100%; border: 1px solid var(--line); background: #fff;
+  border-radius: 12px; padding: 12px 14px; font: inherit; color: var(--ink);
+}
+input[type="number"]:focus, select:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, white);
+  border-color: var(--accent);
+}
+.unit {
+  min-width: 88px; text-align: center; padding: 12px 10px;
+  border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 700;
+}
+.choices { display: grid; gap: 10px; }
+.choice {
+  display: flex; gap: 12px; align-items: flex-start;
+  border: 1px solid var(--line); background: #fff; border-radius: 14px;
+  padding: 14px; cursor: pointer; transition: border-color .2s, transform .2s, box-shadow .2s;
+}
+.choice:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); transform: translateY(-1px); }
+.choice.selected {
+  border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  background: linear-gradient(180deg, #fff, var(--accent-soft));
+}
+.choice input { margin-top: 3px; accent-color: var(--accent); }
+.choice strong { display: block; margin-bottom: 2px; }
+.choice span { color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+.info {
+  border-radius: 16px; padding: 16px 16px 14px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.4)),
+    linear-gradient(135deg, #e4edf4, #d9eff2);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, white);
+}
+.info h3 {
+  margin: 0 0 8px; font-size: 0.95rem; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--warn);
+}
+.info p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 0.95rem; }
+.actions {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 0 22px 22px;
+}
+button.btn {
+  border: 0; border-radius: 999px; padding: 12px 20px; font: inherit; font-weight: 700;
+  cursor: pointer; transition: transform .15s ease, opacity .15s ease;
+}
+button.btn:active { transform: translateY(1px); }
+button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-secondary { background: #d9e3eb; color: var(--ink); }
+.btn-primary { background: var(--accent); color: #fff; min-width: 140px; }
+.btn-ghost { background: transparent; color: var(--muted); text-decoration: underline; padding-inline: 8px; }
+.error {
+  margin-top: 8px; color: #8b1e1e; background: #f8e4e0; border-radius: 10px; padding: 10px 12px; font-size: 0.9rem;
+}
+.results { display: grid; gap: 14px; }
+.hero-card, .alt-card {
+  border: 1px solid var(--line); border-radius: 18px; background: #fff; overflow: hidden;
+}
+.hero-card {
+  background:
+    radial-gradient(500px 180px at 100% 0%, #d2eef2, transparent 60%),
+    #fff;
+}
+.card-top {
+  display: flex; justify-content: space-between; gap: 12px; align-items: start;
+  padding: 18px 18px 8px;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent); color: #fff; font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 6px 10px;
+}
+.model-name {
+  font-family: var(--display); font-size: 2rem; margin: 8px 0 4px; line-height: 1.05;
+}
+.sku { color: var(--muted); font-size: 0.92rem; }
+.meta-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px;
+  padding: 8px 18px 18px;
+}
+@media (max-width: 560px) { .meta-grid { grid-template-columns: 1fr; } }
+.meta {
+  border: 1px solid #eee5d7; border-radius: 12px; padding: 12px;
+  background: #f2f6f9;
+}
+.meta .k { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.meta .v { font-size: 1.15rem; font-weight: 700; margin-top: 4px; }
+.meta .v.price { color: var(--accent); font-size: 1.35rem; }
+.note {
+  margin: 0 18px 18px; padding: 12px 14px; border-radius: 12px;
+  background: #e7f3f5; color: #184a52; font-size: 0.9rem; line-height: 1.45;
+}
+.alts h3 { margin: 8px 0 0; font-size: 1rem; }
+.alt-card { padding: 14px 16px; display: grid; grid-template-columns: 1.2fr auto; gap: 8px 16px; align-items: center; }
+.alt-card .model { font-weight: 700; }
+.alt-card .sub { color: var(--muted); font-size: 0.88rem; }
+.alt-price { font-weight: 700; color: var(--accent); text-align: right; }
+.empty {
+  padding: 28px 18px; text-align: left; border: 1px dashed var(--line); border-radius: 16px; background: #f2f6f9;
+}
+.empty h2 { font-family: var(--display); font-weight: 400; margin: 0 0 8px; }
+.summary-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.chip {
+  background: #d9e3eb; color: var(--ink); border-radius: 999px; padding: 6px 10px; font-size: 0.82rem; font-weight: 600;
+}
+.footer-note {
+  margin-top: 18px; color: var(--muted); font-size: 0.82rem; text-align: center; line-height: 1.4;
+}
+.hidden { display: none !important; }
+
+@media print {
+  body::before { display: none !important; }
+  body { background: #fff !important; }
+  .lang, .progress, .actions, .footer-note, .info { display: none !important; }
+  .app { max-width: none; padding: 0; }
+  .shell { box-shadow: none; border: 0; }
+  .hero-card, .alt-card { break-inside: avoid; }
+}
+.sku-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.btn-mini {
+  border: 1px solid var(--line); background: #fff; color: var(--accent);
+  border-radius: 999px; padding: 6px 10px; font: inherit; font-size: 0.8rem;
+  font-weight: 700; cursor: pointer;
+}
+.btn-mini:hover { border-color: var(--accent); }
+.result-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-name" id="brandName">Targaz</div>
+      <div class="brand-sub" id="brandSub">Natural gas regulator selector</div>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="langEN" class="active" data-lang="en">EN</button>
+      <button type="button" id="langTR" data-lang="tr">TR</button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <div class="panel" id="panel"></div>
+    <div class="actions" id="actions"></div>
+  </div>
+  <p class="footer-note" id="footerNote"></p>
+</div>
+
+<script id="catalog-data" type="application/json">[{"family":"CAKA","model":"CAKA 25 HP","sku":"MM.08.10.Y12","spring":"Y12","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":300.0,"askForPrice":false,"weightKg":2.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[50.0,80.0,120.0,250.0,280.0,440.0,520.0,550.0,550.0],"cg":null},{"family":"CAKA","model":"CAKA 25 HP","sku":"MM.08.10.Y13","spring":"Y13","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":300.0,"askForPrice":false,"weightKg":2.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[50.0,80.0,120.0,250.0,280.0,440.0,520.0,550.0,550.0],"cg":null},{"family":"CAKA","model":"CAKA 25 HP","sku":"MM.08.10.Y14","spring":"Y14","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":300.0,"askForPrice":false,"weightKg":2.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[50.0,80.0,120.0,250.0,280.0,440.0,520.0,550.0,550.0],"cg":null},{"family":"CAKA","model":"CAKA 25 HP","sku":"MM.08.10.Y20","spring":"Y20","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":300.0,"askForPrice":false,"weightKg":2.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[50.0,80.0,110.0,235.0,260.0,415.0,480.0,500.0,500.0],"cg":null},{"family":"CAKA","model":"CAKA 25 HP","sku":"MM.08.10.Y31","spring":"Y31","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":360.0,"askForPrice":false,"weightKg":2.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,80.0,110.0,235.0,260.0,415.0,480.0,500.0,500.0],"cg":null},{"family":"CAKA","model":"CAKA 25 HP","sku":"MM.08.10.Y32","spring":"Y32","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":360.0,"askForPrice":false,"weightKg":2.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,110.0,235.0,260.0,460.0,500.0,500.0,500.0],"cg":null},{"family":"CAKA","model":"CAKA 25 HP","sku":"MM.08.10.Y33","spring":"Y33","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":360.0,"askForPrice":false,"weightKg":2.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,235.0,295.0,460.0,500.0,500.0,500.0],"cg":null},{"family":"CAKA","model":"CAKA 25 HP","sku":"MM.08.10.Y34","spring":"Y34","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":360.0,"askForPrice":false,"weightKg":2.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,295.0,460.0,500.0,500.0,500.0],"cg":null},{"family":"CAKA","model":"CAKA 25 S","sku":"MM.08.11.Y11","spring":"Y11","connection":"threaded","dnIn":25,"dnOut":40,"maxInletBar":20,"outletMbar":21.0,"outletLabel":"21 mbar","ssv":false,"priceEur":420.0,"askForPrice":false,"weightKg":4.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[125.0,200.0,280.0,380.0,null,null,null,null,null],"cg":null},{"family":"CAKA","model":"CAKA 25 S","sku":"MM.08.11.Y12","spring":"Y12","connection":"threaded","dnIn":25,"dnOut":40,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":420.0,"askForPrice":false,"weightKg":4.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[125.0,200.0,280.0,380.0,null,null,null,null,null],"cg":null},{"family":"CAKA","model":"CAKA 25 S","sku":"MM.08.11.Y13","spring":"Y13","connection":"threaded","dnIn":25,"dnOut":40,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":420.0,"askForPrice":false,"weightKg":4.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[125.0,200.0,280.0,380.0,420.0,null,null,null,null],"cg":null},{"family":"CAKA","model":"CAKA 25 S","sku":"MM.08.11.Y14","spring":"Y14","connection":"threaded","dnIn":25,"dnOut":40,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":420.0,"askForPrice":false,"weightKg":4.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[125.0,200.0,280.0,380.0,420.0,450.0,null,null,null],"cg":null},{"family":"CAKA","model":"CAKA 25 S","sku":"MM.08.11.Y20","spring":"Y20","connection":"threaded","dnIn":25,"dnOut":40,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":500.0,"askForPrice":false,"weightKg":4.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[140.0,235.0,320.0,450.0,500.0,550.0,null,null,null],"cg":null},{"family":"CAKA","model":"CAKA 25 S","sku":"MM.08.11.Y31","spring":"Y31","connection":"threaded","dnIn":25,"dnOut":40,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":500.0,"askForPrice":false,"weightKg":4.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,200.0,280.0,350.0,420.0,450.0,500.0,null,null],"cg":null},{"family":"CAKA","model":"CAKA 25 S","sku":"MM.08.11.Y32","spring":"Y32","connection":"threaded","dnIn":25,"dnOut":40,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":500.0,"askForPrice":false,"weightKg":4.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,250.0,350.0,420.0,450.0,500.0,600.0,null],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.12.Y20","spring":"Y20","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":450.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[180.0,280.0,325.0,525.0,700.0,700.0,700.0,700.0,700.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.12.Y31","spring":"Y31","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":500.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,250.0,325.0,525.0,700.0,700.0,700.0,700.0,700.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.12.Y32","spring":"Y32","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":500.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,275.0,475.0,625.0,700.0,700.0,700.0,700.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.12.Y33","spring":"Y33","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":525.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,400.0,550.0,675.0,700.0,700.0,700.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.12.Y34","spring":"Y34","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":525.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,500.0,675.0,725.0,725.0,725.0],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.24.Y12","spring":"Y12","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":550.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,600.0,750.0,1200.0,1500.0,1750.0,1750.0,1750.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.24.Y13","spring":"Y13","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":550.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,600.0,750.0,1200.0,1500.0,1750.0,1750.0,1750.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.24.Y14","spring":"Y14","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":550.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,600.0,750.0,1200.0,1500.0,1750.0,1750.0,1750.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.24.Y20","spring":"Y20","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":550.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[350.0,620.0,750.0,1200.0,1500.0,1700.0,1700.0,1700.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.24.Y31","spring":"Y31","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":650.0,"askForPrice":false,"weightKg":13.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,580.0,780.0,1300.0,1600.0,1800.0,1800.0,1800.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.24.Y32","spring":"Y32","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":650.0,"askForPrice":false,"weightKg":13.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,780.0,1350.0,1650.0,1850.0,1850.0,1850.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.24.Y33","spring":"Y33","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":650.0,"askForPrice":false,"weightKg":13.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,1400.0,1700.0,1900.0,1900.0,1900.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.24.Y34","spring":"Y34","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":650.0,"askForPrice":false,"weightKg":13.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,1700.0,1950.0,1950.0,1950.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.32.Y12","spring":"Y12","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":700.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[480.0,720.0,900.0,1400.0,1800.0,2100.0,2100.0,2100.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.32.Y13","spring":"Y13","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":700.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[480.0,720.0,900.0,1400.0,1800.0,2100.0,2100.0,2100.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.32.Y14","spring":"Y14","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":700.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[480.0,720.0,900.0,1400.0,1800.0,2100.0,2100.0,2100.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.32.Y20","spring":"Y20","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":700.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[420.0,720.0,900.0,1400.0,1800.0,2000.0,2000.0,2000.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.32.Y31","spring":"Y31","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":700.0,"askForPrice":false,"weightKg":16.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,700.0,930.0,1300.0,1900.0,2150.0,2150.0,2150.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.32.Y32","spring":"Y32","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":950.0,"askForPrice":false,"weightKg":13.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,930.0,1550.0,1980.0,2200.0,2500.0,2500.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.32.Y33","spring":"Y33","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":950.0,"askForPrice":false,"weightKg":13.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,1650.0,2500.0,2900.0,3000.0,3000.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.32.Y34","spring":"Y34","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":950.0,"askForPrice":false,"weightKg":13.0,"dimensionsMm":"220 x 536 x 220","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,2500.0,3250.0,3500.0,3500.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.22.Y12","spring":"Y12","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":20.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,600.0,750.0,1200.0,1500.0,1750.0,1750.0,1750.0,1750.0],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.22.Y13","spring":"Y13","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":20.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,600.0,750.0,1200.0,1500.0,1750.0,1750.0,1750.0,1750.0],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.22.Y14","spring":"Y14","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,600.0,750.0,1200.0,1500.0,1750.0,1750.0,1750.0,1750.0],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.22.Y20","spring":"Y20","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[350.0,620.0,750.0,1200.0,1500.0,1700.0,1700.0,1700.0,1700.0],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.22.Y31","spring":"Y31","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.5,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,580.0,780.0,1300.0,1600.0,1800.0,1800.0,1800.0,1800.0],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.22.Y32","spring":"Y32","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.5,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,780.0,1350.0,1650.0,1850.0,1850.0,1850.0,1850.0],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.22.Y33","spring":"Y33","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.5,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,1400.0,1700.0,1900.0,1900.0,1900.0,1900.0],"cg":null},{"family":"CAKA","model":"CAKA 40 S (C600)","sku":"MM.08.22.Y34","spring":"Y34","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.5,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,1700.0,1950.0,1950.0,1950.0,1950.0],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.31.Y12","spring":"Y12","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":20.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[480.0,720.0,900.0,1400.0,1800.0,2100.0,2100.0,2100.0,2100.0],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.31.Y13","spring":"Y13","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":20.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[480.0,720.0,900.0,1400.0,1800.0,2100.0,2100.0,2100.0,2100.0],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.31.Y14","spring":"Y14","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":20.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[480.0,720.0,900.0,1400.0,1800.0,2100.0,2100.0,2100.0,2100.0],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.31.Y20","spring":"Y20","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":21.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[420.0,720.0,900.0,1400.0,1800.0,2000.0,2000.0,2000.0,2000.0],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.31.Y31","spring":"Y31","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":21.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,700.0,930.0,1300.0,1900.0,2150.0,2150.0,2150.0,2150.0],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.31.Y32","spring":"Y32","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":18.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,930.0,1550.0,1980.0,2200.0,2500.0,2500.0,2500.0],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.31.Y33","spring":"Y33","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":18.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,1650.0,2500.0,2900.0,3000.0,3000.0,3000.0],"cg":null},{"family":"CAKA","model":"CAKA 50 S (C600)","sku":"MM.08.31.Y34","spring":"Y34","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":18.0,"dimensionsMm":"345 x 533 x 345","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,2500.0,3250.0,3500.0,3500.0,3500.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.13.Y20","spring":"Y20","connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":500.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":"220 x 370 x 267","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[180.0,280.0,325.0,525.0,700.0,700.0,700.0,700.0,700.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.13.Y31","spring":"Y31","connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":550.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":"220 x 370 x 267","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,250.0,325.0,525.0,700.0,700.0,700.0,700.0,700.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.13.Y32","spring":"Y32","connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":550.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":"220 x 370 x 267","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,275.0,475.0,625.0,700.0,700.0,700.0,700.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.13.Y33","spring":"Y33","connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":575.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":"220 x 370 x 267","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,400.0,550.0,675.0,700.0,700.0,700.0],"cg":null},{"family":"CAKA","model":"CAKA 25","sku":"MM.08.13.Y34","spring":"Y34","connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":575.0,"askForPrice":false,"weightKg":10.0,"dimensionsMm":"220 x 370 x 267","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,500.0,675.0,725.0,725.0,725.0],"cg":null},{"family":"CAKA","model":"CAKA 40","sku":"MM.08.20.Y12","spring":"Y12","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":900.0,"askForPrice":false,"weightKg":20.0,"dimensionsMm":"345 x 423 x 370","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,650.0,750.0,1200.0,1700.0,1700.0,1700.0,1700.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40","sku":"MM.08.20.Y13","spring":"Y13","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":900.0,"askForPrice":false,"weightKg":20.0,"dimensionsMm":"345 x 423 x 370","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,650.0,750.0,1200.0,1700.0,1700.0,1700.0,1700.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40","sku":"MM.08.20.Y14","spring":"Y14","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":900.0,"askForPrice":false,"weightKg":21.0,"dimensionsMm":"345 x 423 x 370","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[400.0,650.0,750.0,1200.0,1700.0,1700.0,1700.0,1700.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40","sku":"MM.08.20.Y20","spring":"Y20","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":900.0,"askForPrice":false,"weightKg":21.0,"dimensionsMm":"345 x 423 x 370","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[300.0,700.0,850.0,1450.0,1800.0,1800.0,1800.0,1800.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40","sku":"MM.08.20.Y31","spring":"Y31","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.5,"dimensionsMm":"345 x 423 x 370","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,600.0,850.0,1450.0,1800.0,1800.0,1800.0,1800.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40","sku":"MM.08.20.Y32","spring":"Y32","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.5,"dimensionsMm":"345 x 423 x 370","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,750.0,1450.0,2000.0,2250.0,2250.0,2250.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40","sku":"MM.08.20.Y33","spring":"Y33","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":1000.0,"askForPrice":false,"weightKg":21.5,"dimensionsMm":"345 x 423 x 370","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,1450.0,2000.0,2400.0,2400.0,2400.0,null],"cg":null},{"family":"CAKA","model":"CAKA 40","sku":"MM.08.20.Y34","spring":"Y34","connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":1100.0,"askForPrice":false,"weightKg":21.5,"dimensionsMm":"345 x 423 x 370","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,2000.0,2600.0,3000.0,3000.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50","sku":"MM.08.30.Y12","spring":"Y12","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":1850.0,"askForPrice":false,"weightKg":42.0,"dimensionsMm":"345 x 496 x 400","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[600.0,975.0,1125.0,1800.0,2550.0,2550.0,2550.0,2550.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50","sku":"MM.08.30.Y13","spring":"Y13","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":1850.0,"askForPrice":false,"weightKg":42.0,"dimensionsMm":"345 x 496 x 400","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[600.0,975.0,1125.0,1800.0,2550.0,2550.0,2550.0,2550.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50","sku":"MM.08.30.Y14","spring":"Y14","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":1850.0,"askForPrice":false,"weightKg":42.0,"dimensionsMm":"345 x 496 x 400","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[600.0,975.0,1125.0,1800.0,2550.0,2550.0,2550.0,2550.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50","sku":"MM.08.30.Y20","spring":"Y20","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":1850.0,"askForPrice":false,"weightKg":42.0,"dimensionsMm":"345 x 496 x 400","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[450.0,1100.0,1275.0,2200.0,2700.0,2700.0,2700.0,2700.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50","sku":"MM.08.30.Y31","spring":"Y31","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":2250.0,"askForPrice":false,"weightKg":42.0,"dimensionsMm":"345 x 496 x 400","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,900.0,1275.0,2200.0,2700.0,2700.0,2700.0,2700.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50","sku":"MM.08.30.Y32","spring":"Y32","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":2250.0,"askForPrice":false,"weightKg":42.0,"dimensionsMm":"345 x 496 x 400","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,1125.0,2550.0,3250.0,3800.0,3800.0,3800.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50","sku":"MM.08.30.Y33","spring":"Y33","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":2250.0,"askForPrice":false,"weightKg":42.0,"dimensionsMm":"345 x 496 x 400","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,2550.0,3250.0,4000.0,4000.0,4000.0,null],"cg":null},{"family":"CAKA","model":"CAKA 50","sku":"MM.08.30.Y34","spring":"Y34","connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":2350.0,"askForPrice":false,"weightKg":42.0,"dimensionsMm":"345 x 496 x 400","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,3250.0,4500.0,5000.0,5000.0,null],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y11","spring":"Y11","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":21.0,"outletLabel":"21 mbar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[2200.0,2900.0,4100.0,5950.0,6500.0,6750.0,6750.0,6750.0,6750.0],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y12","spring":"Y12","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[2200.0,2900.0,4100.0,5950.0,6500.0,6750.0,6750.0,6750.0,6750.0],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y13","spring":"Y13","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[2200.0,2900.0,4100.0,5950.0,6500.0,6750.0,6750.0,6750.0,6750.0],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y14","spring":"Y14","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[1750.0,3050.0,4500.0,6750.0,7750.0,8100.0,8100.0,8100.0,8100.0],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y20","spring":"Y20","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[1750.0,3050.0,4500.0,6750.0,7750.0,8100.0,8100.0,8100.0,8100.0],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y31","spring":"Y31","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,2700.0,4000.0,6750.0,8800.0,9950.0,9950.0,9950.0,9950.0],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y32","spring":"Y32","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,3000.0,6500.0,8800.0,9950.0,9950.0,9950.0,9950.0],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y33","spring":"Y33","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,5500.0,9850.0,11800.0,12500.0,15100.0,15100.0],"cg":null},{"family":"CAKA","model":"CAKA 80","sku":"MM.08.40.Y34","spring":"Y34","connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":2900.0,"askForPrice":false,"weightKg":55.0,"dimensionsMm":"345 x 640 x 412","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,8500.0,12750.0,14100.0,15100.0,15500.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y11","spring":"Y11","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":21.0,"outletLabel":"21 mbar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[2970.0,3910.0,5530.0,8030.0,8770.0,9110.0,9110.0,9110.0,9110.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y12","spring":"Y12","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[2970.0,3910.0,5530.0,8030.0,8770.0,9110.0,9110.0,9110.0,9110.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y13","spring":"Y13","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[2970.0,3910.0,5530.0,8030.0,8770.0,9110.0,9110.0,9110.0,9110.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y14","spring":"Y14","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":150.0,"outletLabel":"150 mbar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[2350.0,4110.0,6070.0,8950.0,10460.0,10530.0,10530.0,10530.0,10530.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y20","spring":"Y20","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[2350.0,4110.0,6070.0,8950.0,10460.0,10530.0,10530.0,10530.0,10530.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y31","spring":"Y31","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":500.0,"outletLabel":"500 mbar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,3640.0,5400.0,8950.0,11880.0,13430.0,13430.0,13430.0,13430.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y32","spring":"Y32","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":1000.0,"outletLabel":"1 bar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,4050.0,8770.0,11880.0,13430.0,13430.0,13430.0,13430.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y33","spring":"Y33","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":2000.0,"outletLabel":"2 bar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,7420.0,13290.0,15930.0,16870.0,20380.0,20920.0],"cg":null},{"family":"CAKA","model":"CAKA 100","sku":"MM.08.50.Y34","spring":"Y34","connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":20,"outletMbar":4000.0,"outletLabel":"4 bar","ssv":false,"priceEur":4700.0,"askForPrice":false,"weightKg":65.0,"dimensionsMm":"455 x 665 x 458","capacityType":"table","pinCols":[0.5,1,2,4,6,10,12,16,19],"capacity":[null,null,null,null,11470.0,17210.0,19030.0,20380.0,20920.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 25","sku":"MM.01.31.01.10","spring":"10","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":5,"outletMbar":21.0,"outletLabel":"21 mbar","ssv":false,"priceEur":143,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[100.0,150.0,180.0,200.0,200.0,200.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 25","sku":"MM.01.31.01.20","spring":"20","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":5,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":143,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[100.0,150.0,200.0,225.0,250.0,250.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 25","sku":"MM.01.31.01.30","spring":"30","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":5,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":143,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[80.0,120.0,200.0,250.0,300.0,300.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 25","sku":"MM.01.31.01.40","spring":"40","connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":5,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":143,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[60.0,110.0,200.0,250.0,400.0,400.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 32","sku":"MM.01.32.01.10","spring":"10","connection":"threaded","dnIn":32,"dnOut":32,"maxInletBar":5,"outletMbar":21.0,"outletLabel":"21 mbar","ssv":false,"priceEur":414,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[270.0,430.0,450.0,450.0,450.0,450.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 32","sku":"MM.01.32.01.20","spring":"20","connection":"threaded","dnIn":32,"dnOut":32,"maxInletBar":5,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":414,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[270.0,410.0,600.0,620.0,620.0,620.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 32","sku":"MM.01.32.01.30","spring":"30","connection":"threaded","dnIn":32,"dnOut":32,"maxInletBar":5,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":414,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[250.0,400.0,650.0,740.0,740.0,740.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 32","sku":"MM.01.32.01.40","spring":"40","connection":"threaded","dnIn":32,"dnOut":32,"maxInletBar":5,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":414,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[190.0,370.0,650.0,890.0,940.0,940.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 40","sku":"MM.01.33.01.10","spring":"10","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":5,"outletMbar":21.0,"outletLabel":"21 mbar","ssv":false,"priceEur":414,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[270.0,430.0,690.0,700.0,700.0,700.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 40","sku":"MM.01.33.01.20","spring":"20","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":5,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":414,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[270.0,430.0,700.0,860.0,870.0,890.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 40","sku":"MM.01.33.01.30","spring":"30","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":5,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":414,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[260.0,420.0,690.0,950.0,1050.0,1070.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 40","sku":"MM.01.33.01.40","spring":"40","connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":5,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":414,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[190.0,380.0,670.0,940.0,1160.0,1380.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 50","sku":"MM.01.34.01.10","spring":"10","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":5,"outletMbar":21.0,"outletLabel":"21 mbar","ssv":false,"priceEur":451,"askForPrice":false,"weightKg":3.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[300.0,460.0,750.0,990.0,1290.0,1500.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 50","sku":"MM.01.34.01.20","spring":"20","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":5,"outletMbar":50.0,"outletLabel":"50 mbar","ssv":false,"priceEur":451,"askForPrice":false,"weightKg":3.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[300.0,460.0,750.0,1000.0,1300.0,1500.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 50","sku":"MM.01.34.01.30","spring":"30","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":5,"outletMbar":100.0,"outletLabel":"100 mbar","ssv":false,"priceEur":451,"askForPrice":false,"weightKg":3.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[280.0,450.0,740.0,1000.0,1300.0,1500.0],"cg":null},{"family":"FRG-HP","model":"FRG-HP 50","sku":"MM.01.34.01.40","spring":"40","connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":5,"outletMbar":300.0,"outletLabel":"300 mbar","ssv":false,"priceEur":451,"askForPrice":false,"weightKg":3.5,"dimensionsMm":null,"capacityType":"table","pinCols":[0.5,1,2,3,4,5],"capacity":[210.0,390.0,700.0,960.0,1250.0,1500.0],"cg":null},{"family":"FRG-SSV","model":"FRG-SSV 15","sku":"MM.01.21.01","spring":null,"connection":"threaded","dnIn":15,"dnOut":15,"maxInletBar":1,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":true,"priceEur":71,"askForPrice":false,"weightKg":1.7,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":25,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG-SSV","model":"FRG-SSV 20","sku":"MM.01.22.01","spring":null,"connection":"threaded","dnIn":20,"dnOut":20,"maxInletBar":1,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":true,"priceEur":71,"askForPrice":false,"weightKg":1.8,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":40,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG-SSV","model":"FRG-SSV 25","sku":"MM.01.23.01","spring":null,"connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":1,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":true,"priceEur":71,"askForPrice":false,"weightKg":1.8,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":60,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG-SSV","model":"FRG-SSV 32","sku":"MM.01.24.01","spring":null,"connection":"threaded","dnIn":32,"dnOut":32,"maxInletBar":1,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":true,"priceEur":143,"askForPrice":false,"weightKg":3.6,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":100,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG-SSV","model":"FRG-SSV 40","sku":"MM.01.25.01","spring":null,"connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":1,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":true,"priceEur":143,"askForPrice":false,"weightKg":3.5,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":150,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG-SSV","model":"FRG-SSV 50","sku":"MM.01.26.01","spring":null,"connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":1,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":true,"priceEur":150,"askForPrice":false,"weightKg":3.5,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":200,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 15","sku":"MM.01.21.02","spring":null,"connection":"threaded","dnIn":15,"dnOut":15,"maxInletBar":1.0,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":57,"askForPrice":false,"weightKg":1.4,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":25,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 20","sku":"MM.01.22.02","spring":null,"connection":"threaded","dnIn":20,"dnOut":20,"maxInletBar":1.0,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":57,"askForPrice":false,"weightKg":1.4,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":40,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 25","sku":"MM.01.23.02","spring":null,"connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":1.0,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":57,"askForPrice":false,"weightKg":1.4,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":60,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 32","sku":"MM.01.24.02","spring":null,"connection":"threaded","dnIn":32,"dnOut":32,"maxInletBar":1.0,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":135,"askForPrice":false,"weightKg":3.4,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":100,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 40","sku":"MM.01.25.02","spring":null,"connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":1.0,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":135,"askForPrice":false,"weightKg":3.2,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":150,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 50","sku":"MM.01.26.02","spring":null,"connection":"threaded","dnIn":50,"dnOut":50,"maxInletBar":1.0,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":143,"askForPrice":false,"weightKg":3.2,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":200,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 65","sku":"MM.01.51.02","spring":null,"connection":"flanged","dnIn":65,"dnOut":65,"maxInletBar":0.5,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":528,"askForPrice":false,"weightKg":12.5,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":400,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 80","sku":"MM.01.52.02","spring":null,"connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":0.5,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":535,"askForPrice":false,"weightKg":11.0,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":600,"pinCols":null,"capacity":null,"cg":null},{"family":"FRG","model":"FRG 100","sku":"MM.01.53.02","spring":null,"connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":0.5,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":300,"outletLabel":"21-300 mbar","ssv":false,"priceEur":614,"askForPrice":false,"weightKg":12.0,"dimensionsMm":null,"capacityType":"heuristic","heuristicMaxFlow":900,"pinCols":null,"capacity":null,"cg":null},{"family":"CEX","model":"CEX 75","sku":"-","spring":null,"connection":"threaded","dnIn":null,"dnOut":null,"maxInletBar":5,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":150,"outletLabel":"21-150 mbar","ssv":false,"priceEur":150,"askForPrice":false,"weightKg":2.3,"dimensionsMm":null,"capacityType":"fixed","fixedCapacity":75,"pinCols":null,"capacity":null,"cg":null},{"family":"CEX","model":"CEX 75","sku":"-","spring":null,"connection":"threaded","dnIn":null,"dnOut":null,"maxInletBar":5,"outletMbar":null,"outletMinMbar":150,"outletMaxMbar":300,"outletLabel":"150-300 mbar","ssv":false,"priceEur":150,"askForPrice":false,"weightKg":2.3,"dimensionsMm":null,"capacityType":"fixed","fixedCapacity":75,"pinCols":null,"capacity":null,"cg":null},{"family":"CEX","model":"CEX 100","sku":"-","spring":null,"connection":"threaded","dnIn":null,"dnOut":null,"maxInletBar":5,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":150,"outletLabel":"21-150 mbar","ssv":false,"priceEur":165,"askForPrice":false,"weightKg":2.3,"dimensionsMm":null,"capacityType":"fixed","fixedCapacity":100,"pinCols":null,"capacity":null,"cg":null},{"family":"CEX","model":"CEX 100","sku":"-","spring":null,"connection":"threaded","dnIn":null,"dnOut":null,"maxInletBar":5,"outletMbar":null,"outletMinMbar":150,"outletMaxMbar":300,"outletLabel":"150-300 mbar","ssv":false,"priceEur":175,"askForPrice":false,"weightKg":2.3,"dimensionsMm":null,"capacityType":"fixed","fixedCapacity":100,"pinCols":null,"capacity":null,"cg":null},{"family":"CSR","model":"CSR 6-25","sku":"-","spring":null,"connection":"threaded","dnIn":null,"dnOut":null,"maxInletBar":5,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":150,"outletLabel":"21-150 mbar","ssv":false,"priceEur":92,"askForPrice":false,"weightKg":1.2,"dimensionsMm":null,"capacityType":"fixed","fixedCapacity":25,"pinCols":null,"capacity":null,"cg":null},{"family":"CSR","model":"CSR 6-25","sku":"-","spring":null,"connection":"threaded","dnIn":null,"dnOut":null,"maxInletBar":5,"outletMbar":null,"outletMinMbar":150,"outletMaxMbar":300,"outletLabel":"150-300 mbar","ssv":false,"priceEur":92,"askForPrice":false,"weightKg":1.2,"dimensionsMm":null,"capacityType":"fixed","fixedCapacity":25,"pinCols":null,"capacity":null,"cg":null},{"family":"CSR","model":"CSR 50","sku":"-","spring":null,"connection":"threaded","dnIn":null,"dnOut":null,"maxInletBar":5,"outletMbar":null,"outletMinMbar":21,"outletMaxMbar":150,"outletLabel":"21-150 mbar","ssv":false,"priceEur":115,"askForPrice":false,"weightKg":1.2,"dimensionsMm":null,"capacityType":"fixed","fixedCapacity":50,"pinCols":null,"capacity":null,"cg":null},{"family":"CSR","model":"CSR 50","sku":"-","spring":null,"connection":"threaded","dnIn":null,"dnOut":null,"maxInletBar":5,"outletMbar":null,"outletMinMbar":150,"outletMaxMbar":300,"outletLabel":"150-300 mbar","ssv":false,"priceEur":115,"askForPrice":false,"weightKg":1.2,"dimensionsMm":null,"capacityType":"fixed","fixedCapacity":50,"pinCols":null,"capacity":null,"cg":null},{"family":"CAKA-PL","model":"CAKA 25 PL","sku":"MM.08.14.P00","spring":null,"connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":50,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":4000,"outletLabel":"pilot-controlled","ssv":false,"priceEur":3100,"askForPrice":false,"weightKg":20,"dimensionsMm":"454 x 380 x 345","capacityType":"cg","cg":450,"pinCols":null,"capacity":null},{"family":"CAKA-PL","model":"CAKA 40 PL","sku":"MM.08.20.P00","spring":null,"connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":4000,"outletLabel":"pilot-controlled","ssv":false,"priceEur":3400,"askForPrice":false,"weightKg":26,"dimensionsMm":"454 x 400 x 345","capacityType":"cg","cg":950,"pinCols":null,"capacity":null},{"family":"CAKA-PL","model":"CAKA 50 PL","sku":"MM.08.30.P00","spring":null,"connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":50,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":4000,"outletLabel":"pilot-controlled","ssv":false,"priceEur":4000,"askForPrice":false,"weightKg":46,"dimensionsMm":"454 x 600 x 345","capacityType":"cg","cg":1900,"pinCols":null,"capacity":null},{"family":"CAKA-PL","model":"CAKA 80 PL","sku":"MM.08.42.P00","spring":null,"connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":4000,"outletLabel":"pilot-controlled","ssv":false,"priceEur":4800,"askForPrice":false,"weightKg":65,"dimensionsMm":"454 x 627 x 345","capacityType":"cg","cg":4500,"pinCols":null,"capacity":null},{"family":"CAKA-PL","model":"CAKA 100 PL","sku":"MM.08.50.P00","spring":null,"connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":4000,"outletLabel":"pilot-controlled","ssv":false,"priceEur":5000,"askForPrice":false,"weightKg":75,"dimensionsMm":"570 x 537 x 455","capacityType":"cg","cg":6200,"pinCols":null,"capacity":null},{"family":"CAKA-XL","model":"CAKA XL DN25 (CL150)","sku":"MM.09.11.P00","spring":null,"connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":2640,"askForPrice":false,"weightKg":25,"dimensionsMm":"210 x 225","capacityType":"cg","cg":525,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-XL","model":"CAKA XL DN40 (CL150)","sku":"MM.09.21.P00","spring":null,"connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":2800,"askForPrice":false,"weightKg":45,"dimensionsMm":"251 x 365","capacityType":"cg","cg":1350,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-XL","model":"CAKA XL DN50 (CL150)","sku":"MM.09.31.P00","spring":null,"connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":3360,"askForPrice":false,"weightKg":60,"dimensionsMm":"286 x 287","capacityType":"cg","cg":2200,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-XL","model":"CAKA XL DN80 (CL150)","sku":"MM.09.41.P00","spring":null,"connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":3760,"askForPrice":false,"weightKg":85,"dimensionsMm":"337 x 400","capacityType":"cg","cg":5100,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-XL","model":"CAKA XL DN100 (CL150)","sku":"MM.09.51.P00","spring":null,"connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":90,"dimensionsMm":null,"capacityType":"cg","cg":8200,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-XL","model":"CAKA XL DN150 (CL150)","sku":"MM.09.61.P00","spring":null,"connection":"flanged","dnIn":150,"dnOut":150,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":null,"dimensionsMm":null,"capacityType":"cg","cg":20000,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-XL","model":"CAKA XL DN25 (CL300-600)","sku":"MM.09.11.P00","spring":null,"connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":3200,"askForPrice":false,"weightKg":25,"dimensionsMm":"210 x 225","capacityType":"cg","cg":525,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-XL","model":"CAKA XL DN40 (CL300-600)","sku":"MM.09.21.P00","spring":null,"connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":3600,"askForPrice":false,"weightKg":45,"dimensionsMm":"251 x 365","capacityType":"cg","cg":1350,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-XL","model":"CAKA XL DN50 (CL300-600)","sku":"MM.09.31.P00","spring":null,"connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":4000,"askForPrice":false,"weightKg":60,"dimensionsMm":"286 x 287","capacityType":"cg","cg":2200,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-XL","model":"CAKA XL DN80 (CL300-600)","sku":"MM.09.41.P00","spring":null,"connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":4480,"askForPrice":false,"weightKg":85,"dimensionsMm":"337 x 400","capacityType":"cg","cg":5100,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-XL","model":"CAKA XL DN100 (CL300-600)","sku":"MM.09.51.P00","spring":null,"connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":90,"dimensionsMm":null,"capacityType":"cg","cg":8200,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-XL","model":"CAKA XL DN150 (CL300-600)","sku":"MM.09.61.P00","spring":null,"connection":"flanged","dnIn":150,"dnOut":150,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":null,"dimensionsMm":null,"capacityType":"cg","cg":20000,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-MXL","model":"CAKA MXL DN25 (CL150)","sku":"MM.09.13.P00","spring":null,"connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":5000,"askForPrice":false,"weightKg":50,"dimensionsMm":"385 x 225","capacityType":"cg","cg":450,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-MXL","model":"CAKA MXL DN40 (CL150)","sku":"MM.09.23.P00","spring":null,"connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":5500,"askForPrice":false,"weightKg":90,"dimensionsMm":"450 x 365","capacityType":"cg","cg":1150,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-MXL","model":"CAKA MXL DN50 (CL150)","sku":"MM.09.33.P00","spring":null,"connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":6500,"askForPrice":false,"weightKg":110,"dimensionsMm":"535 x 287","capacityType":"cg","cg":1950,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-MXL","model":"CAKA MXL DN80 (CL150)","sku":"MM.09.43.P00","spring":null,"connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":7250,"askForPrice":false,"weightKg":150,"dimensionsMm":"600 x 400","capacityType":"cg","cg":4600,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-MXL","model":"CAKA MXL DN100 (CL150)","sku":"MM.09.53.P00","spring":null,"connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":155,"dimensionsMm":null,"capacityType":"cg","cg":6900,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-MXL","model":"CAKA MXL DN150 (CL150)","sku":"MM.09.63.P00","spring":null,"connection":"flanged","dnIn":150,"dnOut":150,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":null,"dimensionsMm":null,"capacityType":"cg","cg":16500,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-MXL","model":"CAKA MXL DN25 (CL300-600)","sku":"MM.09.13.P00","spring":null,"connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":6000,"askForPrice":false,"weightKg":50,"dimensionsMm":"385 x 225","capacityType":"cg","cg":450,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-MXL","model":"CAKA MXL DN40 (CL300-600)","sku":"MM.09.23.P00","spring":null,"connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":7000,"askForPrice":false,"weightKg":90,"dimensionsMm":"450 x 365","capacityType":"cg","cg":1150,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-MXL","model":"CAKA MXL DN50 (CL300-600)","sku":"MM.09.33.P00","spring":null,"connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":7800,"askForPrice":false,"weightKg":110,"dimensionsMm":"535 x 287","capacityType":"cg","cg":1950,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-MXL","model":"CAKA MXL DN80 (CL300-600)","sku":"MM.09.43.P00","spring":null,"connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":8500,"askForPrice":false,"weightKg":150,"dimensionsMm":"600 x 400","capacityType":"cg","cg":4600,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-MXL","model":"CAKA MXL DN100 (CL300-600)","sku":"MM.09.53.P00","spring":null,"connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":155,"dimensionsMm":null,"capacityType":"cg","cg":6900,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-MXL","model":"CAKA MXL DN150 (CL300-600)","sku":"MM.09.63.P00","spring":null,"connection":"flanged","dnIn":150,"dnOut":150,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":null,"dimensionsMm":null,"capacityType":"cg","cg":16500,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-BXL","model":"CAKA BXL DN25 (CL150)","sku":"MM.09.12.P00","spring":null,"connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":3300,"askForPrice":false,"weightKg":50,"dimensionsMm":"390 x 225","capacityType":"cg","cg":500,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-BXL","model":"CAKA BXL DN40 (CL150)","sku":"MM.09.22.P00","spring":null,"connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":3600,"askForPrice":false,"weightKg":75,"dimensionsMm":"440 x 365","capacityType":"cg","cg":1100,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-BXL","model":"CAKA BXL DN50 (CL150)","sku":"MM.09.32.P00","spring":null,"connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":4200,"askForPrice":false,"weightKg":90,"dimensionsMm":"535 x 287","capacityType":"cg","cg":1900,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-BXL","model":"CAKA BXL DN80 (CL150)","sku":"MM.09.42.P00","spring":null,"connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":4700,"askForPrice":false,"weightKg":130,"dimensionsMm":"600 x 400","capacityType":"cg","cg":4000,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-BXL","model":"CAKA BXL DN100 (CL150)","sku":"MM.09.52.P00","spring":null,"connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":135,"dimensionsMm":null,"capacityType":"cg","cg":6500,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-BXL","model":"CAKA BXL DN150 (CL150)","sku":"MM.09.62.P00","spring":null,"connection":"flanged","dnIn":150,"dnOut":150,"maxInletBar":25,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":null,"dimensionsMm":null,"capacityType":"cg","cg":16000,"pinCols":null,"capacity":null,"pressureClass":"CL150"},{"family":"CAKA-BXL","model":"CAKA BXL DN25 (CL300-600)","sku":"MM.09.12.P00","spring":null,"connection":"flanged","dnIn":25,"dnOut":25,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":4000,"askForPrice":false,"weightKg":50,"dimensionsMm":"390 x 225","capacityType":"cg","cg":500,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-BXL","model":"CAKA BXL DN40 (CL300-600)","sku":"MM.09.22.P00","spring":null,"connection":"flanged","dnIn":40,"dnOut":40,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":4500,"askForPrice":false,"weightKg":75,"dimensionsMm":"440 x 365","capacityType":"cg","cg":1100,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-BXL","model":"CAKA BXL DN50 (CL300-600)","sku":"MM.09.32.P00","spring":null,"connection":"flanged","dnIn":50,"dnOut":50,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":5000,"askForPrice":false,"weightKg":90,"dimensionsMm":"535 x 287","capacityType":"cg","cg":1900,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-BXL","model":"CAKA BXL DN80 (CL300-600)","sku":"MM.09.42.P00","spring":null,"connection":"flanged","dnIn":80,"dnOut":80,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":5600,"askForPrice":false,"weightKg":130,"dimensionsMm":"600 x 400","capacityType":"cg","cg":4000,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-BXL","model":"CAKA BXL DN100 (CL300-600)","sku":"MM.09.52.P00","spring":null,"connection":"flanged","dnIn":100,"dnOut":100,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":135,"dimensionsMm":null,"capacityType":"cg","cg":6500,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CAKA-BXL","model":"CAKA BXL DN150 (CL300-600)","sku":"MM.09.62.P00","spring":null,"connection":"flanged","dnIn":150,"dnOut":150,"maxInletBar":100,"outletMbar":null,"outletMinMbar":20,"outletMaxMbar":8000,"outletLabel":"axial / pilot","ssv":false,"priceEur":null,"askForPrice":true,"weightKg":null,"dimensionsMm":null,"capacityType":"cg","cg":16000,"pinCols":null,"capacity":null,"pressureClass":"CL300-600"},{"family":"CNG","model":"CNG 15","sku":"MM.12.10.00","spring":null,"connection":"threaded","dnIn":15,"dnOut":15,"maxInletBar":250,"outletMbar":null,"outletMinMbar":5000,"outletMaxMbar":40000,"outletLabel":"5-40 bar","ssv":false,"priceEur":750,"askForPrice":false,"weightKg":4.0,"dimensionsMm":null,"capacityType":"table","pinCols":[25,50,100,150,200],"capacity":[300,400,450,500,550],"cg":null,"connectionDetail":"NPT"},{"family":"CNG","model":"CNG 25","sku":"MM.12.20.00","spring":null,"connection":"threaded","dnIn":25,"dnOut":25,"maxInletBar":250,"outletMbar":null,"outletMinMbar":5000,"outletMaxMbar":40000,"outletLabel":"5-40 bar","ssv":false,"priceEur":1050,"askForPrice":false,"weightKg":9.7,"dimensionsMm":null,"capacityType":"table","pinCols":[25,50,100,150,200],"capacity":[700,1000,1250,1500,2000],"cg":null,"connectionDetail":"NPT"},{"family":"CNG","model":"CNG 40","sku":"MM.12.30.00","spring":null,"connection":"threaded","dnIn":40,"dnOut":40,"maxInletBar":250,"outletMbar":null,"outletMinMbar":5000,"outletMaxMbar":40000,"outletLabel":"5-40 bar","ssv":false,"priceEur":1500,"askForPrice":false,"weightKg":9.7,"dimensionsMm":null,"capacityType":"table","pinCols":[25,50,100,150,200],"capacity":[900,1300,1600,2000,2600],"cg":null,"connectionDetail":"NPT"}]</script>
+<script>
+const CATALOG = JSON.parse(document.getElementById("catalog-data").textContent);
+
+const I18N = {
+  en: {
+    brandSub: "Natural gas regulator selector",
+    footer: "Recommendations are guidance only. Confirm final sizing with capacity charts or Targaz/FRS sales support. Source: Targaz Product List 2024/MAY.",
+    steps: ["Inlet pressure", "Outlet pressure", "Flow", "Slam-shut (SSV)", "Connection", "Results"],
+    back: "Back",
+    next: "Next",
+    restart: "Start over",
+    seeResults: "See recommendation",
+    pinTitle: "What is the inlet pressure?",
+    pinLead: "Enter the upstream / network pressure feeding the regulator.",
+    pinLabel: "Inlet pressure (Pin)",
+    pinInfoTitle: "How to read Pin",
+    pinInfo: "Service lines to buildings are often around 0.5–1 bar. District or industrial feeds may be several bar. Very high Pin (tens to hundreds of bar) usually means CNG or special HP equipment. Choose a regulator whose maximum inlet rating is at least your Pin.",
+    poutTitle: "What outlet pressure do you need?",
+    poutLead: "Enter the required downstream setpoint after the regulator.",
+    poutLabel: "Outlet pressure (Pout)",
+    poutInfoTitle: "Typical setpoints",
+    poutInfo: "Many appliances and building networks use about 21–300 mbar. Higher Pout (0.5–4 bar) is common on industrial or distribution stages. Match Pout to the spring / range of the regulator.",
+    flowTitle: "What flow capacity do you need?",
+    flowLead: "Enter the required gas flow in standard cubic metres per hour.",
+    flowLabel: "Required flow",
+    flowUnit: "Stm³/h",
+    flowInfoTitle: "Sizing with a soft margin",
+    flowInfo: "Pick a regulator that can deliver your peak demand with roughly 10–20% spare capacity. Oversizing a little is usually safer than running at the absolute limit of the capacity table.",
+    ssvTitle: "Do you need an integrated slam-shut valve?",
+    ssvLead: "Slam-shut (SSV) closes automatically on abnormal pressure for added safety.",
+    ssvYes: "Yes — integrated SSV",
+    ssvYesDesc: "Prefer FRG-SSV models with built-in shut-off.",
+    ssvNo: "No — without SSV",
+    ssvNoDesc: "Standard regulators; a separate safety valve can still be added later.",
+    ssvAny: "No preference",
+    ssvAnyDesc: "Show both options and rank the best fit.",
+    ssvInfoTitle: "When SSV is used",
+    ssvInfo: "Integrated SSV is common on service / governor installations where over- or under-pressure protection is required at the regulator. Larger station projects sometimes use a separate shut-off valve instead of an integrated FRG-SSV.",
+    connTitle: "Threaded or flanged connection?",
+    connLead: "Choose the end connection that matches the piping.",
+    connTh: "Threaded",
+    connThDesc: "Typical for smaller DN and compact indoor / service installs.",
+    connFl: "Flanged",
+    connFlDesc: "Typical for larger DN, outdoor stations, and easier maintenance.",
+    connAny: "No preference",
+    connAnyDesc: "Let capacity and pressure decide first.",
+    connInfoTitle: "Threaded vs flanged",
+    connInfo: "Threaded ends suit smaller pipes (often up to DN50) and quick residential or light commercial jobs. Flanged ends are preferred for DN65+ and for RMS / station skids where alignment, gaskets, and service access matter. CAKA PL / XL axial regulators are flanged by design.",
+    unitBar: "bar",
+    unitMbar: "mbar",
+    invalid: "Please enter a valid positive number.",
+    best: "Best match",
+    alternatives: "Alternatives",
+    weight: "Weight",
+    price: "List price",
+    connection: "Connection",
+    ssv: "SSV",
+    capacity: "Est. capacity",
+    dimensions: "Dimensions",
+    family: "Family",
+    dn: "DN",
+    maxIn: "Max inlet",
+    outlet: "Outlet",
+    yes: "Yes",
+    no: "No",
+    askPrice: "Ask for price",
+    na: "—",
+    emptyTitle: "No close match found",
+    emptyLead: "Try relaxing SSV or connection preference, or check that Pin, Pout, and flow are within catalog ranges.",
+    whyBlocked: "Likely blockers",
+    noteTable: "Capacity taken from catalog tables (soft match with margin).",
+    noteCg: "This family is sized with flow coefficient (Cg). Confirm final capacity with Targaz charts / sales.",
+    noteHeur: "Governor capacity is estimated by size. Confirm against project peak load.",
+    noteFixed: "Fixed service capacity from catalog.",
+    summaryPin: "Pin",
+    summaryPout: "Pout",
+    summaryFlow: "Flow",
+    summarySsv: "SSV",
+    summaryConn: "Connection",
+    any: "Any",
+    threaded: "Threaded",
+    flanged: "Flanged",
+    copySku: "Copy SKU",
+    copied: "Copied",
+    print: "Print / PDF",
+  },
+  tr: {
+    brandSub: "Doğalgaz regülatör seçim yardımcısı",
+    footer: "Öneriler rehber niteliktedir. Nihai seçimi kapasite tabloları veya Targaz/FRS satış desteği ile doğrulayın. Kaynak: Targaz Product List 2024/MAY.",
+    steps: ["Giriş basıncı", "Çıkış basıncı", "Kapasite / debi", "Emniyet kapama (SSV)", "Bağlantı", "Sonuç"],
+    back: "Geri",
+    next: "Devam",
+    restart: "Baştan başla",
+    seeResults: "Sonuçları göster",
+    pinTitle: "Giriş basıncı (Pgiriş) nedir?",
+    pinLead: "Regülatöre gelen şebeke / hat basıncını (Pgiriş) girin.",
+    pinLabel: "Giriş basıncı — Pin (Pgiriş)",
+    pinInfoTitle: "Pgiriş nasıl okunur?",
+    pinInfo: "Bina servis hatları genelde 0,5–1 bar civarındadır. Sanayi veya bölgesel beslemeler birkaç bar olabilir. Çok yüksek Pgiriş (onlarca–yüzlerce bar) genelde CNG veya özel yüksek basınç ekipmanı demektir. Seçilen regülatörün maksimum giriş basıncı, Pgiriş değerinizden düşük olmamalıdır.",
+    poutTitle: "İstenen çıkış basıncı (Pçıkış) nedir?",
+    poutLead: "Regülatör sonrası hedef basıncı (Pçıkış) girin.",
+    poutLabel: "Çıkış basıncı — Pout (Pçıkış)",
+    poutInfoTitle: "Tipik ayar değerleri",
+    poutInfo: "Birçok cihaz ve bina şebekesi yaklaşık 21–300 mbar kullanır. Daha yüksek Pçıkış (0,5–4 bar) sanayi veya dağıtım kademelerinde yaygındır. Pçıkış, regülatörün yay / ayar aralığı ile uyumlu olmalıdır.",
+    flowTitle: "Gerekli kapasite / debi nedir?",
+    flowLead: "Standart metreküp/saat (Stm³/h) cinsinden gereken gaz kapasitesini girin.",
+    flowLabel: "Gerekli kapasite (debi)",
+    flowUnit: "Stm³/h",
+    flowInfoTitle: "Kapasite emniyet payı",
+    flowInfo: "Pik ihtiyacı karşılayan ve yaklaşık %10–20 yedek kapasitesi olan bir regülatör tercih edin. Kapasite tablosunun sınırında çalışmak yerine biraz büyük seçmek genelde daha güvenlidir.",
+    ssvTitle: "Entegre emniyet kapama / shut-off (SSV) ister misiniz?",
+    ssvLead: "SSV (emniyet kapama), anormal basınca karşı otomatik kapama sağlar.",
+    ssvYes: "Evet — entegre SSV",
+    ssvYesDesc: "Entegre shut-off’lu FRG-SSV modellerini tercih et.",
+    ssvNo: "Hayır — SSV’siz",
+    ssvNoDesc: "Standart regülatör; ayrı emniyet kapama vanası sonradan eklenebilir.",
+    ssvAny: "Fark etmez",
+    ssvAnyDesc: "Her iki seçeneği de göster, en uygununu sırala.",
+    ssvInfoTitle: "SSV ne zaman kullanılır?",
+    ssvInfo: "Entegre SSV, regülatörde aşırı / düşük basınç koruması istenen servis ve governor (servis regülatörü) uygulamalarında yaygındır. Büyük istasyonlarda bazen entegre FRG-SSV yerine ayrı emniyet kapama vanası tercih edilir.",
+    connTitle: "Dişli mi flanşlı mı?",
+    connLead: "Boru tesisatına uygun bağlantı tipini seçin.",
+    connTh: "Dişli",
+    connThDesc: "Küçük DN ve kompakt iç / servis montajları için tipiktir.",
+    connFl: "Flanşlı",
+    connFlDesc: "Büyük DN, dış istasyonlar ve bakımı kolay tesisatlar için tipiktir.",
+    connAny: "Fark etmez",
+    connAnyDesc: "Önce basınç ve kapasiteye göre seçilsin.",
+    connInfoTitle: "Dişli ve flanşlı bağlantı",
+    connInfo: "Dişli uçlar genelde DN50’ye kadar küçük hatlar ve hızlı konut / hafif ticari işler için uygundur. Flanşlı uçlar DN65+ ve hizalama, conta ve servis erişiminin önemli olduğu RMS / istasyon skid’lerinde tercih edilir. CAKA PL / XL eksenel akışlı regülatörler flanşlıdır.",
+    unitBar: "bar",
+    unitMbar: "mbar",
+    invalid: "Lütfen geçerli pozitif bir sayı girin.",
+    best: "Önerilen model",
+    alternatives: "Alternatifler",
+    weight: "Ağırlık",
+    price: "Liste fiyatı",
+    connection: "Bağlantı",
+    ssv: "SSV",
+    capacity: "Tahmini kapasite",
+    dimensions: "Boyutlar (U×Y×G)",
+    family: "Seri",
+    dn: "DN",
+    maxIn: "Maks. giriş basıncı",
+    outlet: "Çıkış (Pçıkış)",
+    yes: "Evet",
+    no: "Hayır",
+    askPrice: "Fiyat için sorunuz",
+    na: "—",
+    emptyTitle: "Uygun eşleşme bulunamadı",
+    emptyLead: "SSV veya bağlantı tercihini gevşetin; Pgiriş, Pçıkış ve kapasitenin katalog aralığında olduğunu kontrol edin.",
+    whyBlocked: "Olası engeller",
+    noteTable: "Kapasite, katalog tablolarına göre yaklaşık eşleştirilmiştir.",
+    noteCg: "Bu seri Cg (akış katsayısı) ile boyutlandırılır. Nihai kapasiteyi Targaz tabloları / satış ile doğrulayın.",
+    noteHeur: "Servis / governor kapasitesi çapa göre tahmindir. Proje pik yükü ile doğrulayın.",
+    noteFixed: "Katalogdaki sabit servis kapasitesi.",
+    summaryPin: "Pgiriş",
+    summaryPout: "Pçıkış",
+    summaryFlow: "Kapasite",
+    summarySsv: "SSV",
+    summaryConn: "Bağlantı",
+    any: "Fark etmez",
+    threaded: "Dişli",
+    flanged: "Flanşlı",
+    copySku: "SKU kopyala",
+    copied: "Kopyalandı",
+    print: "Yazdır / PDF",
+  }
+};
+
+const FORM_KEY = "targaz-reg-form";
+
+const state = {
+  lang: localStorage.getItem("targaz-reg-lang") || "tr",
+  step: 0,
+  pinValue: "",
+  pinUnit: "bar",
+  poutValue: "",
+  poutUnit: "mbar",
+  flow: "",
+  ssv: "any",
+  connection: "any",
+  error: "",
+};
+
+(function loadForm() {
+  try {
+    const raw = localStorage.getItem(FORM_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    ["step","pinValue","pinUnit","poutValue","poutUnit","flow","ssv","connection"].forEach((k) => {
+      if (saved[k] != null) state[k] = saved[k];
+    });
+    if (typeof state.step !== "number" || state.step < 0 || state.step > 5) state.step = 0;
+  } catch (e) {}
+})();
+
+function saveForm() {
+  localStorage.setItem(FORM_KEY, JSON.stringify({
+    step: state.step,
+    pinValue: state.pinValue,
+    pinUnit: state.pinUnit,
+    poutValue: state.poutValue,
+    poutUnit: state.poutUnit,
+    flow: state.flow,
+    ssv: state.ssv,
+    connection: state.connection,
+  }));
+}
+
+const t = () => I18N[state.lang];
+
+function toBar(value, unit) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return NaN;
+  return unit === "mbar" ? n / 1000 : n;
+}
+function toMbar(value, unit) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return NaN;
+  return unit === "bar" ? n * 1000 : n;
+}
+function fmtNum(n) {
+  if (n == null || !Number.isFinite(n)) return t().na;
+  return Number(n).toLocaleString(state.lang === "tr" ? "tr-TR" : "en-US", { maximumFractionDigits: 2 });
+}
+function fmtPrice(item) {
+  if (item.askForPrice || item.priceEur == null) return t().askPrice;
+  return fmtNum(item.priceEur) + " €";
+}
+function fmtWeight(item) {
+  if (item.weightKg == null) return t().na;
+  return fmtNum(item.weightKg) + " kg";
+}
+function connLabel(c) {
+  if (c === "threaded") return t().threaded;
+  if (c === "flanged") return t().flanged;
+  return t().any;
+}
+
+function interpolateCapacity(item, pinBar) {
+  const pins = item.pinCols;
+  const caps = item.capacity;
+  if (!pins || !caps || !pins.length) return null;
+  if (pinBar <= pins[0]) return caps[0];
+  if (pinBar >= pins[pins.length - 1]) {
+    // last defined
+    for (let i = caps.length - 1; i >= 0; i--) if (caps[i] != null) return caps[i];
+    return null;
+  }
+  for (let i = 0; i < pins.length - 1; i++) {
+    if (pinBar >= pins[i] && pinBar <= pins[i + 1]) {
+      const a = caps[i], b = caps[i + 1];
+      if (a == null && b == null) return null;
+      if (a == null) return b;
+      if (b == null) return a;
+      const r = (pinBar - pins[i]) / (pins[i + 1] - pins[i]);
+      return a + (b - a) * r;
+    }
+  }
+  return null;
+}
+
+function estimateCapacity(item, pinBar, poutMbar) {
+  if (item.capacityType === "table") {
+    return interpolateCapacity(item, pinBar);
+  }
+  if (item.capacityType === "fixed") return item.fixedCapacity;
+  if (item.capacityType === "heuristic") return item.heuristicMaxFlow;
+  if (item.capacityType === "cg" && item.cg && pinBar > 0) {
+    // Soft natural-gas estimate from Cg (guidance only)
+    return item.cg * pinBar * 0.45;
+  }
+  return null;
+}
+
+function outletOk(item, poutMbar) {
+  if (item.outletMbar != null) {
+    // spring setpoint soft band ±20%
+    const target = item.outletMbar;
+    const tol = Math.max(target * 0.2, 15);
+    return Math.abs(poutMbar - target) <= tol;
+  }
+  if (item.outletMinMbar != null && item.outletMaxMbar != null) {
+    return poutMbar >= item.outletMinMbar * 0.9 && poutMbar <= item.outletMaxMbar * 1.1;
+  }
+  return true;
+}
+
+function matchCatalog(req) {
+  const need = req.flow * 1.1; // soft 10% margin
+  const results = [];
+  const blockers = { inlet: 0, outlet: 0, flow: 0, ssv: 0, conn: 0 };
+
+  for (const item of CATALOG) {
+    if (req.connection !== "any" && item.connection !== req.connection) { blockers.conn++; continue; }
+    if (req.ssv === "yes" && !item.ssv) { blockers.ssv++; continue; }
+    if (req.ssv === "no" && item.ssv) { blockers.ssv++; continue; }
+    if (!(item.maxInletBar >= req.pinBar * 0.98)) { blockers.inlet++; continue; }
+    if (!outletOk(item, req.poutMbar)) { blockers.outlet++; continue; }
+
+    const cap = estimateCapacity(item, req.pinBar, req.poutMbar);
+    if (cap == null) {
+      // allow Cg/ask items through with weak score if pressures fit
+      if (item.capacityType === "cg") {
+        // only suggest for higher flows or high pin
+        if (req.flow < 200 && req.pinBar < 8) { blockers.flow++; continue; }
+      } else {
+        blockers.flow++; continue;
+      }
+    } else if (cap + 1e-6 < need * 0.85) { // soft: allow near-misses with penalty
+      blockers.flow++; continue;
+    }
+
+    const usableCap = cap != null ? cap : (item.cg || 0) * req.pinBar * 0.45;
+    const margin = usableCap - need;
+    let score = 0;
+    if (margin >= 0) score += 1000 - Math.min(margin, 5000) / 10;
+    else score += 400 + margin; // near miss
+    if (item.priceEur != null) score += Math.max(0, 300 - item.priceEur / 30);
+    else score -= 50;
+    if (item.dnIn != null) score += Math.max(0, 80 - item.dnIn);
+    if (item.weightKg != null) score += Math.max(0, 40 - item.weightKg / 5);
+    // Prefer exact spring matches
+    if (item.outletMbar != null) score += Math.max(0, 50 - Math.abs(item.outletMbar - req.poutMbar) / 10);
+    // Prefer integrated SSV when requested
+    if (req.ssv === "yes" && item.ssv) score += 40;
+    // Deprioritize CNG unless high pin
+    if (item.family === "CNG" && req.pinBar < 40) score -= 200;
+    if (item.family.startsWith("CAKA-") && item.capacityType === "cg" && req.pinBar < 10) score -= 80;
+    // Prefer service governors / double-stage when Pin is modest
+    if (req.pinBar <= 5 && ["FRG","FRG-SSV","CEX","CSR"].includes(item.family)) score += 60;
+    if (req.pinBar <= 1.2 && ["FRG","FRG-SSV"].includes(item.family)) score += 40;
+
+    results.push({ item, cap: usableCap, score, margin });
+  }
+
+  results.sort((a, b) => b.score - a.score);
+  return { results, blockers };
+}
+
+function renderProgress() {
+  const el = document.getElementById("progress");
+  el.innerHTML = "";
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement("span");
+    if (i < state.step) s.className = "done";
+    if (i === state.step) s.className = "current";
+    el.appendChild(s);
+  }
+}
+
+function fieldNumber(id, label, value, unitSelectHtml) {
+  return `<div class="field">
+    <label for="${id}">${label}</label>
+    <div class="row">
+      <input id="${id}" type="number" min="0" step="any" value="${value}" />
+      ${unitSelectHtml}
+    </div>
+  </div>`;
+}
+
+function render() {
+  document.documentElement.lang = state.lang;
+  document.getElementById("brandSub").textContent = t().brandSub;
+  document.getElementById("footerNote").textContent = t().footer;
+  document.getElementById("langEN").classList.toggle("active", state.lang === "en");
+  document.getElementById("langTR").classList.toggle("active", state.lang === "tr");
+  renderProgress();
+
+  const panel = document.getElementById("panel");
+  const actions = document.getElementById("actions");
+  const stepName = t().steps[state.step];
+  let body = "";
+
+  if (state.step === 0) {
+    body = `
+      <div class="step-kicker">${stepName}</div>
+      <h1>${t().pinTitle}</h1>
+      <p class="lead">${t().pinLead}</p>
+      <div class="layout">
+        <div>
+          ${fieldNumber("pinValue", t().pinLabel, state.pinValue, `
+            <select id="pinUnit" class="unit" style="appearance:auto;min-width:100px">
+              <option value="bar" ${state.pinUnit==="bar"?"selected":""}>${t().unitBar}</option>
+              <option value="mbar" ${state.pinUnit==="mbar"?"selected":""}>${t().unitMbar}</option>
+            </select>`)}
+          ${state.error ? `<div class="error">${state.error}</div>` : ""}
+        </div>
+        <aside class="info"><h3>${t().pinInfoTitle}</h3><p>${t().pinInfo}</p></aside>
+      </div>`;
+  } else if (state.step === 1) {
+    body = `
+      <div class="step-kicker">${stepName}</div>
+      <h1>${t().poutTitle}</h1>
+      <p class="lead">${t().poutLead}</p>
+      <div class="layout">
+        <div>
+          ${fieldNumber("poutValue", t().poutLabel, state.poutValue, `
+            <select id="poutUnit" class="unit" style="appearance:auto;min-width:100px">
+              <option value="mbar" ${state.poutUnit==="mbar"?"selected":""}>${t().unitMbar}</option>
+              <option value="bar" ${state.poutUnit==="bar"?"selected":""}>${t().unitBar}</option>
+            </select>`)}
+          ${state.error ? `<div class="error">${state.error}</div>` : ""}
+        </div>
+        <aside class="info"><h3>${t().poutInfoTitle}</h3><p>${t().poutInfo}</p></aside>
+      </div>`;
+  } else if (state.step === 2) {
+    body = `
+      <div class="step-kicker">${stepName}</div>
+      <h1>${t().flowTitle}</h1>
+      <p class="lead">${t().flowLead}</p>
+      <div class="layout">
+        <div>
+          <div class="field">
+            <label for="flow">${t().flowLabel}</label>
+            <div class="row">
+              <input id="flow" type="number" min="0" step="any" value="${state.flow}" />
+              <div class="unit">${t().flowUnit}</div>
+            </div>
+          </div>
+          ${state.error ? `<div class="error">${state.error}</div>` : ""}
+        </div>
+        <aside class="info"><h3>${t().flowInfoTitle}</h3><p>${t().flowInfo}</p></aside>
+      </div>`;
+  } else if (state.step === 3) {
+    body = `
+      <div class="step-kicker">${stepName}</div>
+      <h1>${t().ssvTitle}</h1>
+      <p class="lead">${t().ssvLead}</p>
+      <div class="layout">
+        <div class="choices">
+          ${choice("ssv","yes",t().ssvYes,t().ssvYesDesc)}
+          ${choice("ssv","no",t().ssvNo,t().ssvNoDesc)}
+          ${choice("ssv","any",t().ssvAny,t().ssvAnyDesc)}
+        </div>
+        <aside class="info"><h3>${t().ssvInfoTitle}</h3><p>${t().ssvInfo}</p></aside>
+      </div>`;
+  } else if (state.step === 4) {
+    body = `
+      <div class="step-kicker">${stepName}</div>
+      <h1>${t().connTitle}</h1>
+      <p class="lead">${t().connLead}</p>
+      <div class="layout">
+        <div class="choices">
+          ${choice("connection","threaded",t().connTh,t().connThDesc)}
+          ${choice("connection","flanged",t().connFl,t().connFlDesc)}
+          ${choice("connection","any",t().connAny,t().connAnyDesc)}
+        </div>
+        <aside class="info"><h3>${t().connInfoTitle}</h3><p>${t().connInfo}</p></aside>
+      </div>`;
+  } else {
+    body = renderResults();
+  }
+
+  panel.innerHTML = body;
+  bindStepInputs();
+  const printBtn = document.getElementById("btnPrint");
+  if (printBtn) printBtn.onclick = () => window.print();
+
+  let actionsHtml = "";
+  if (state.step > 0 && state.step < 5) {
+    actionsHtml += `<button class="btn btn-secondary" id="btnBack" type="button">${t().back}</button>`;
+  } else if (state.step === 5) {
+    actionsHtml += `<button class="btn btn-secondary" id="btnRestart" type="button">${t().restart}</button>`;
+  } else {
+    actionsHtml += `<span></span>`;
+  }
+  if (state.step < 4) {
+    actionsHtml += `<button class="btn btn-primary" id="btnNext" type="button">${t().next}</button>`;
+  } else if (state.step === 4) {
+    actionsHtml += `<button class="btn btn-primary" id="btnNext" type="button">${t().seeResults}</button>`;
+  } else {
+    actionsHtml += `<button class="btn btn-primary" id="btnBack" type="button">${t().back}</button>`;
+  }
+  actions.innerHTML = actionsHtml;
+
+  const back = document.getElementById("btnBack");
+  const next = document.getElementById("btnNext");
+  const restart = document.getElementById("btnRestart");
+  if (back) back.onclick = () => { state.error=""; state.step = Math.max(0, state.step-1); saveForm(); render(); };
+  if (restart) restart.onclick = () => {
+    Object.assign(state, { step:0, pinValue:"", poutValue:"", flow:"", ssv:"any", connection:"any", error:"", pinUnit:"bar", poutUnit:"mbar" });
+    saveForm();
+    render();
+  };
+  if (next) next.onclick = () => goNext();
+}
+
+function choice(group, value, title, desc) {
+  const selected = state[group] === value ? "selected" : "";
+  return `<label class="choice ${selected}">
+    <input type="radio" name="${group}" value="${value}" ${state[group]===value?"checked":""} />
+    <div><strong>${title}</strong><span>${desc}</span></div>
+  </label>`;
+}
+
+function bindStepInputs() {
+  const pinValue = document.getElementById("pinValue");
+  const pinUnit = document.getElementById("pinUnit");
+  const poutValue = document.getElementById("poutValue");
+  const poutUnit = document.getElementById("poutUnit");
+  const flow = document.getElementById("flow");
+  if (pinValue) pinValue.oninput = e => { state.pinValue = e.target.value; saveForm(); };
+  if (pinUnit) pinUnit.onchange = e => { state.pinUnit = e.target.value; saveForm(); };
+  if (poutValue) poutValue.oninput = e => { state.poutValue = e.target.value; saveForm(); };
+  if (poutUnit) poutUnit.onchange = e => { state.poutUnit = e.target.value; saveForm(); };
+  if (flow) flow.oninput = e => { state.flow = e.target.value; saveForm(); };
+  document.querySelectorAll('input[name="ssv"]').forEach(el => {
+    el.onchange = () => { state.ssv = el.value; saveForm(); render(); };
+  });
+  document.querySelectorAll('input[name="connection"]').forEach(el => {
+    el.onchange = () => { state.connection = el.value; saveForm(); render(); };
+  });
+  const copyBtn = document.getElementById("btnCopySku");
+  if (copyBtn) {
+    copyBtn.onclick = async () => {
+      const sku = copyBtn.dataset.sku || "";
+      if (!sku || sku === "-") return;
+      try {
+        await navigator.clipboard.writeText(sku);
+        copyBtn.textContent = t().copied;
+        setTimeout(() => { copyBtn.textContent = t().copySku; }, 1400);
+      } catch (e) {
+        const ta = document.createElement("textarea");
+        ta.value = sku; document.body.appendChild(ta); ta.select();
+        document.execCommand("copy"); ta.remove();
+        copyBtn.textContent = t().copied;
+        setTimeout(() => { copyBtn.textContent = t().copySku; }, 1400);
+      }
+    };
+  }
+}
+
+function goNext() {
+  state.error = "";
+  if (state.step === 0) {
+    const v = Number(state.pinValue);
+    if (!(v > 0)) { state.error = t().invalid; render(); return; }
+  }
+  if (state.step === 1) {
+    const v = Number(state.poutValue);
+    if (!(v > 0)) { state.error = t().invalid; render(); return; }
+  }
+  if (state.step === 2) {
+    const v = Number(state.flow);
+    if (!(v > 0)) { state.error = t().invalid; render(); return; }
+  }
+  state.step += 1;
+  saveForm();
+  render();
+}
+
+function renderResults() {
+  const req = {
+    pinBar: toBar(state.pinValue, state.pinUnit),
+    poutMbar: toMbar(state.poutValue, state.poutUnit),
+    flow: Number(state.flow),
+    ssv: state.ssv,
+    connection: state.connection,
+  };
+  const { results, blockers } = matchCatalog(req);
+  const chips = `
+    <div class="summary-chips">
+      <span class="chip">${t().summaryPin}: ${fmtNum(Number(state.pinValue))} ${state.pinUnit}</span>
+      <span class="chip">${t().summaryPout}: ${fmtNum(Number(state.poutValue))} ${state.poutUnit}</span>
+      <span class="chip">${t().summaryFlow}: ${fmtNum(req.flow)} Stm³/h</span>
+      <span class="chip">${t().summarySsv}: ${req.ssv==="yes"?t().yes:req.ssv==="no"?t().no:t().any}</span>
+      <span class="chip">${t().summaryConn}: ${connLabel(req.connection)}</span>
+    </div>`;
+
+  if (!results.length) {
+    const reasons = [];
+    const labels = {
+      inlet: state.lang==="tr" ? "Maks. giriş basıncı" : "Max inlet pressure",
+      outlet: state.lang==="tr" ? "Çıkış aralığı / yay" : "Outlet range / spring",
+      flow: state.lang==="tr" ? "Debi kapasitesi" : "Flow capacity",
+      ssv: "SSV",
+      conn: state.lang==="tr" ? "Bağlantı tipi" : "Connection type",
+    };
+    Object.entries(blockers).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([k,v]) => {
+      if (v > 0) reasons.push(`${labels[k]}`);
+    });
+    return `
+      <div class="step-kicker">${t().steps[5]}</div>
+      <h1>${t().emptyTitle}</h1>
+      <p class="lead">${t().emptyLead}</p>
+      ${chips}
+      <div class="empty">
+        <h2>${t().whyBlocked}</h2>
+        <p>${reasons.join(" · ") || t().na}</p>
+      </div>`;
+  }
+
+  const top = results[0];
+  const alts = results.slice(1, 5);
+  return `
+    <div class="step-kicker">${t().steps[5]}</div>
+    <h1>${t().best}</h1>
+    <div class="result-toolbar no-print">
+      <button type="button" class="btn-mini" id="btnPrint">${t().print}</button>
+    </div>
+    ${chips}
+    <div class="results" id="printArea">
+      ${card(top, true)}
+      ${alts.length ? `<div class="alts"><h3>${t().alternatives}</h3></div>` : ""}
+      ${alts.map(a => altCard(a)).join("")}
+    </div>`;
+}
+
+function noteFor(item) {
+  if (item.capacityType === "table") return t().noteTable;
+  if (item.capacityType === "cg") return t().noteCg;
+  if (item.capacityType === "heuristic") return t().noteHeur;
+  if (item.capacityType === "fixed") return t().noteFixed;
+  return "";
+}
+
+function dnText(item) {
+  if (item.dnIn && item.dnOut && item.dnIn !== item.dnOut) return `${item.dnIn} → ${item.dnOut}`;
+  if (item.dnIn) return String(item.dnIn);
+  return t().na;
+}
+
+function card(match, hero) {
+  const item = match.item;
+  const skuHtml = item.sku && item.sku !== "-"
+    ? `<div class="sku-row"><span class="sku">${item.sku}${item.outletLabel ? " · " + item.outletLabel : ""}</span>
+        <button type="button" class="btn-mini" id="btnCopySku" data-sku="${item.sku}">${t().copySku}</button></div>`
+    : `<div class="sku">${item.outletLabel || ""}</div>`;
+  return `<article class="hero-card">
+    <div class="card-top">
+      <div>
+        <div class="badge">${t().best}</div>
+        <div class="model-name">${item.model}</div>
+        ${skuHtml}
+      </div>
+    </div>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">${t().price}</div><div class="v price">${fmtPrice(item)}</div></div>
+      <div class="meta"><div class="k">${t().weight}</div><div class="v">${fmtWeight(item)}</div></div>
+      <div class="meta"><div class="k">${t().connection}</div><div class="v">${connLabel(item.connection)}${item.connectionDetail ? " ("+item.connectionDetail+")" : ""}</div></div>
+      <div class="meta"><div class="k">${t().dn}</div><div class="v">${dnText(item)}</div></div>
+      <div class="meta"><div class="k">${t().ssv}</div><div class="v">${item.ssv ? t().yes : t().no}</div></div>
+      <div class="meta"><div class="k">${t().capacity}</div><div class="v">${fmtNum(match.cap)} Stm³/h</div></div>
+      <div class="meta"><div class="k">${t().maxIn}</div><div class="v">${fmtNum(item.maxInletBar)} bar</div></div>
+      <div class="meta"><div class="k">${t().family}</div><div class="v">${item.family}</div></div>
+      ${item.dimensionsMm ? `<div class="meta"><div class="k">${t().dimensions}</div><div class="v">${item.dimensionsMm} mm</div></div>` : ""}
+      <div class="meta"><div class="k">${t().outlet}</div><div class="v">${item.outletLabel || t().na}</div></div>
+    </div>
+    <p class="note">${noteFor(item)}</p>
+  </article>`;
+}
+
+function altCard(match) {
+  const item = match.item;
+  return `<article class="alt-card">
+    <div>
+      <div class="model">${item.model}</div>
+      <div class="sub">${item.sku !== "-" ? item.sku + " · " : ""}${connLabel(item.connection)} · ${fmtWeight(item)} · ${item.ssv ? "SSV" : "—"} · ~${fmtNum(match.cap)} Stm³/h</div>
+    </div>
+    <div class="alt-price">${fmtPrice(item)}</div>
+  </article>`;
+}
+
+document.getElementById("langEN").onclick = () => { state.lang = "en"; localStorage.setItem("targaz-reg-lang","en"); render(); };
+document.getElementById("langTR").onclick = () => { state.lang = "tr"; localStorage.setItem("targaz-reg-lang","tr"); render(); };
+render();
+</script>
+</body>
+</html>
